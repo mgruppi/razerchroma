@@ -108,8 +108,3 @@ class WaveEffect:
 
             # Sleep before updating again
             sleep(1/self.rate)
-
-
-wv = WaveEffect(theta=0, wave_width=0.75, wave_speed=0.01)
-wv.run()
-
