@@ -45,6 +45,7 @@ class WaveEffect:
         self.devices = razer_device.get_devices(filter_advanced=True)  # Get all devices that are advanced-capable
         self.wave_speed = wave_speed
         self.wave_width = wave_width
+        self.wave_split = False  # Controls whether to split wave into two
 
         # Assert hue_bound limits
         assert hue_bounds[0] < hue_bounds[1], "Error: hue_bounds needs lower_bound < upper_bound."
@@ -80,9 +81,14 @@ class WaveEffect:
                 # But first, we need to compute the hue for each column in the matrix
                 hue_array = [0] * cols  # Stores the hue for each column
                 for col in range(cols):
-                    col_hue = self.hue + (cols/2-1 - col)/(self.wave_width * dev.fx.advanced.cols)
+                    if self.wave_split:
+                        # To do split, hue must be symmetric around the center column.
+                        col_hue = self.hue + math.fabs(cols/2-1 - col)/(self.wave_width * dev.fx.advanced.cols)
+                    else:
+                        # We remove the symmetry by adding negative values to the left side
+                        col_hue = self.hue + (cols / 2 - 1 - col) / (self.wave_width * dev.fx.advanced.cols)
 
-                    col_hue = clamp_hue(col_hue, self.hue_bounds)
+                    col_hue = clamp_hue(col_hue, self.hue_bounds)  # Keep hue within bounds
                     hue_array[col] = col_hue
 
                 # Now apply color to matrix
@@ -104,6 +110,6 @@ class WaveEffect:
             sleep(1/self.rate)
 
 
-wv = WaveEffect(theta=0, wave_width=1, wave_speed=0.03)
+wv = WaveEffect(theta=0, wave_width=0.75, wave_speed=0.01)
 wv.run()
 
