@@ -1,6 +1,7 @@
 import colorsys
 from time import sleep
 import math
+import threading
 
 import razer_device
 
@@ -35,14 +36,18 @@ def clamp_hue(hue, hue_bounds):
         return hue
 
 
-class WaveEffect:
+class WaveEffect(threading.Thread):
     # Class attributes:
     # 	- wave_speed: negative speeds will reverse the trajectory
     # 	- wave_width: Fraction of the keyboard taken by a single wave. Low values mean small waves.
     # 	- hue_bounds: where to set bounds to hue. Bounds (0,1) means it will do a rainbow with all colors
     # 	- direction: angle in radians to describe the direction of the wave
-    def __init__(self, wave_speed=0.005, wave_width=1, hue_bounds=(0, 1), theta=0):
-        self.devices = razer_device.get_devices(filter_advanced=True)  # Get all devices that are advanced-capable
+    def __init__(self, wave_speed=0.005, wave_width=1, hue_bounds=(0, 1), theta=0, devices=None):
+        super(WaveEffect,self).__init__()  # thread class initializer
+        if devices is None:
+            self.devices = razer_device.get_devices(filter_advanced=True)  # Get all devices that are advanced-capable
+        else:
+            self.devices = devices
         self.wave_speed = wave_speed
         self.wave_width = wave_width
         self.wave_split = False  # Controls whether to split wave into two
@@ -61,15 +66,16 @@ class WaveEffect:
         # Wake-ups per second
         self.rate = 30
 
+    def __getattr__(self, attr):
+        return self[attr]
+
     def update_hue(self):
         self.hue += self.wave_speed
         # Keep hue in (a,b) interval. There's no need to go beyond that.
         self.hue = clamp_hue(self.hue, self.hue_bounds)
 
     def run(self):
-
-        # TODO: spawn thread from here
-
+        # Main loop
         while True:
             for dev in self.devices:
                 rows, cols = dev.fx.advanced.rows, dev.fx.advanced.cols
@@ -95,11 +101,15 @@ class WaveEffect:
                 for col in range(cols):
                     for row in range(rows):
                         # Shift points for rotation
-                        r = rotate_point(col - cols / 2, row - rows / 2, self.theta)  # Rotate
+                        r = rotate_point(int(col - (cols-1) / 2), int(row - rows / 2), self.theta)  # Rotate
                         # Shift points back to actual place
-                        r = (int(r[0] + cols / 2), int(r[1] + rows / 2))
+                        r = (int(r[0] + (cols-1) / 2), int(r[1] + rows / 2))
 
-                        dev.fx.advanced.matrix[row, col] = get_rgb(hue_array[r[0]])
+                        # Make sure we're not out of bounds
+                        try:
+                            dev.fx.advanced.matrix[row, col] = get_rgb(hue_array[r[0]])
+                        except:
+                            print("Error: out of bounds: ", r[0], r[1])
 
                 dev.fx.advanced.draw()
 
