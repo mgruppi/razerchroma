@@ -42,7 +42,7 @@ class WaveEffect(threading.Thread):
     # 	- wave_width: Fraction of the keyboard taken by a single wave. Low values mean small waves.
     # 	- hue_bounds: where to set bounds to hue. Bounds (0,1) means it will do a rainbow with all colors
     # 	- direction: angle in radians to describe the direction of the wave
-    def __init__(self, wave_speed=0.005, wave_width=1, hue_bounds=(0, 1), theta=0, devices=None):
+    def __init__(self, wave_speed=0.005, wave_width=1.25, hue_bounds=(0, 1), theta=0, devices=None):
         super(WaveEffect,self).__init__()  # thread class initializer
         if devices is None:
             self.devices = razer_device.get_devices(filter_advanced=True)  # Get all devices that are advanced-capable

@@ -9,14 +9,23 @@ def get_attribute(obj, attr):
     except TypeError:
         print("Not member %s." % attr)
         return None
+    except ValueError:
+        print("Value is not acceptable.")
+        return None
 
 
 # Try to set attribute to object
 def set_attribute(obj, attr, val):
     try:
+        if attr in ["wave_speed", "theta"]:
+            val = float(val)
+        elif attr == "wave_split":
+            val = bool(val)
         setattr(obj, attr, val)
         return True
     except TypeError:
+        return False
+    except ValueError:
         return False
     except Exception:
         return False
@@ -30,7 +39,7 @@ def main():
     while True:
         cmd = input("cmd: ")
         cmd = cmd.split()
-        set_attribute(wave, cmd[0], float(cmd[1]))
+        set_attribute(wave, cmd[0], cmd[1])
 
 
 if __name__ == "__main__":
